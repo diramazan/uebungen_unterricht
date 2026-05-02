@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raspberry Pi aufbauen — Einheit 6</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+:root { --bg:#f0fafa; --surface:#fff; --surface2:#e0f5f5; --accent:#1a9ba8; --accent2:#0e7c88; --text:#0f2f35; --dim:#4a7c85; --border:#b2dde0; --green:#16a34a; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Source Sans 3',sans-serif; background:var(--bg); color:var(--text); padding:24px 16px 64px; }
+header { background:var(--accent2); color:white; padding:14px 24px; margin:-24px -16px 32px; display:flex; align-items:center; gap:12px; }
+header .logo { font-family:'Playfair Display',serif; font-size:18px; }
+header .tag { font-size:11px; opacity:0.7; margin-left:auto; letter-spacing:1px; text-transform:uppercase; }
+.wrap { max-width:740px; margin:0 auto; }
+.page-tag { display:inline-block; background:rgba(26,155,168,0.12); border:1px solid rgba(26,155,168,0.3); color:var(--accent); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:3px 12px; border-radius:20px; margin-bottom:12px; }
+h1 { font-family:'Playfair Display',serif; font-size:30px; margin-bottom:6px; }
+.subtitle { color:var(--dim); font-size:15px; margin-bottom:24px; }
+.overall { background:white; border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:24px; box-shadow:0 2px 8px rgba(26,155,168,0.06); }
+.overall-row { display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:8px; }
+.progress-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:3px; transition:width 0.4s; }
+.phase-nav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+.phase-btn { padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700; border:2px solid var(--border); background:white; color:var(--dim); cursor:pointer; transition:all 0.2s; font-family:'Source Sans 3',sans-serif; }
+.phase-btn:hover { border-color:var(--accent); color:var(--accent); }
+.phase-btn.active { background:var(--accent); border-color:var(--accent); color:white; }
+.phase-btn.done { background:var(--green); border-color:var(--green); color:white; }
+.phase { display:none; }
+.phase.active { display:block; animation:fadeUp 0.4s ease forwards; }
+.phase-header { background:var(--accent); border-radius:12px 12px 0 0; padding:18px 22px; color:white; }
+.phase-num { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; opacity:0.7; margin-bottom:3px; }
+.phase-title { font-family:'Playfair Display',serif; font-size:22px; }
+.phase-body { background:white; border:1px solid var(--border); border-top:none; border-radius:0 0 12px 12px; padding:22px; margin-bottom:16px; }
+.phase-prog-row { display:flex; justify-content:space-between; font-size:12px; color:var(--dim); margin-bottom:6px; }
+.win-badge { display:inline-flex; align-items:center; gap:5px; background:#0078d4; color:white; font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; margin-bottom:14px; }
+.rpi-badge { display:inline-flex; align-items:center; gap:5px; background:#c51a4a; color:white; font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; margin-bottom:14px; }
+.step { display:flex; gap:12px; margin-bottom:14px; padding:13px 15px; border-radius:10px; border:1.5px solid var(--border); background:var(--bg); transition:all 0.2s; cursor:pointer; user-select:none; }
+.step:hover { border-color:var(--accent); }
+.step.checked { background:rgba(22,163,74,0.06); border-color:rgba(22,163,74,0.4); }
+.step-check { width:22px; height:22px; border:2px solid var(--border); border-radius:6px; flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; font-size:13px; background:white; transition:all 0.2s; }
+.step.checked .step-check { background:var(--green); border-color:var(--green); color:white; }
+.step-content { flex:1; }
+.step-title { font-size:13px; font-weight:700; margin-bottom:3px; }
+.step.checked .step-title { color:var(--green); text-decoration:line-through; opacity:0.7; }
+.step-desc { font-size:13px; color:var(--dim); line-height:1.6; }
+.step-code { background:#1e2a2a; color:#7ACCD8; font-family:monospace; font-size:12px; padding:10px 13px; border-radius:7px; margin-top:8px; white-space:pre-wrap; word-break:break-all; }
+.step-tip { background:#fffbeb; border:1px solid #fcd34d; border-radius:7px; padding:8px 12px; font-size:12px; color:#92400e; margin-top:8px; }
+.step-warn { background:rgba(220,38,38,0.07); border:1px solid rgba(220,38,38,0.3); border-radius:7px; padding:8px 12px; font-size:12px; color:#dc2626; margin-top:8px; }
+.nav-btns { display:flex; justify-content:space-between; margin-top:16px; }
+.btn { padding:10px 22px; border-radius:9px; font-family:'Source Sans 3',sans-serif; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; }
+.btn-primary { background:var(--accent); color:white; }
+.btn-primary:hover { background:var(--accent2); }
+.btn-secondary { background:transparent; border:1px solid var(--border); color:var(--dim); }
+.btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+.btn:disabled { opacity:0.3; cursor:default; }
+.done-box { background:rgba(22,163,74,0.1); border:1px solid rgba(22,163,74,0.3); border-radius:12px; padding:24px; text-align:center; display:none; margin-top:20px; }
+.done-box.show { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Regel 7 — Lasst Euch nicht Eurer menschlichen Potenziale berauben</div>
+  <span class="tag">Einheit 6 · Raspberry Pi</span>
+</header>
+
+<div class="wrap">
+  <div class="page-tag">Einheit 6 · Hands-on Anleitung</div>
+  <h1>🍓 Raspberry Pi aufbauen</h1>
+  <p class="subtitle">Schritt für Schritt — von der Hardware bis zum lokalen Netzwerk.</p>
+
+  <div class="overall">
+    <div class="overall-row"><span style="font-weight:600;">Gesamtfortschritt</span><span id="total-text" style="color:var(--dim);">0 / 0 Schritte</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="total-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="phase-nav" id="phase-nav"></div>
+  <div id="phases-wrap"></div>
+
+  <div class="done-box" id="done-box">
+    🎉 <strong>Alle Schritte abgeschlossen!</strong><br>
+    Dein Raspberry Pi läuft als lokales Netzwerk. Schüler:innen können sich jetzt verbinden!
+  </div>
+</div>
+
+<script>
+const phases = [
+  { id:'hw', icon:'🔧', title:'Hardware zusammenbauen', badge:'windows', steps:[
+    {t:'Was du brauchst', d:'Raspberry Pi 4 (empfohlen), MicroSD-Karte (min. 16 GB), Powerbank (USB-C), WLAN-fähige Geräte der Schüler:innen.'},
+    {t:'Raspberry Pi Imager herunterladen', d:'Auf dem Windows-PC:', tip:'Download: https://www.raspberrypi.com/software/'},
+    {t:'Imager konfigurieren', d:'Gerät: Raspberry Pi 4\nOS: Raspberry Pi OS Lite (64-bit)\nSpeicher: MicroSD-Karte\n\n⚙️ Zahnrad → SSH aktivieren, User: pi, Passwort setzen, Heim-WLAN eintragen'},
+    {t:'Image schreiben & Pi starten', d:'"Schreiben" klicken (ca. 5 Min). MicroSD in Pi stecken, Powerbank anschließen. Warten bis LED grün blinkt.'},
+  ]},
+  { id:'ssh', icon:'🔌', title:'Verbinden & aktualisieren', badge:'windows', steps:[
+    {t:'PuTTY installieren', d:'SSH-Client für Windows:', tip:'https://www.putty.org/'},
+    {t:'SSH-Verbindung aufbauen', d:'PuTTY öffnen:\nHost: lernplattform.local\nPort: 22, SSH\nLogin: pi / dein Passwort', warn:'Falls "Host not found": 1 Minute warten und nochmal versuchen.'},
+    {t:'System aktualisieren', d:'Diese Befehle eingeben (dauert 5-10 Min):', code:'sudo apt update\nsudo apt upgrade -y'},
+  ]},
+  { id:'hotspot', icon:'📡', title:'WLAN-Hotspot einrichten', badge:'rpi', steps:[
+    {t:'Software installieren', d:'', code:'sudo apt install -y hostapd dnsmasq'},
+    {t:'Hotspot-Konfiguration öffnen', d:'', code:'sudo nano /etc/hostapd/hostapd.conf'},
+    {t:'Hotspot-Einstellungen einfügen', d:'Ctrl+Shift+V zum Einfügen, dann Ctrl+X → Y → Enter:', code:'interface=wlan0\ndriver=nl80211\nssid=Lernplattform-Regel7\nhw_mode=g\nchannel=7\nwmm_enabled=0\nmacaddr_acl=0\nauth_algs=1\nignore_broadcast_ssid=0\nwpa=2\nwpa_passphrase=Lernplattform2025\nwpa_key_mgmt=WPA-PSK\nwpa_pairwise=TKIP\nrsn_pairwise=CCMP'},
+    {t:'DHCP konfigurieren', d:'', code:'sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.backup\nsudo nano /etc/dnsmasq.conf'},
+    {t:'DHCP-Einstellungen einfügen', d:'Ctrl+X → Y → Enter:', code:'interface=wlan0\ndhcp-range=192.168.4.2,192.168.4.50,255.255.255.0,24h\ndomain=local\naddress=/lernplattform.local/192.168.4.1'},
+    {t:'Statische IP setzen', d:'', code:'sudo nano /etc/dhcpcd.conf'},
+    {t:'IP am Ende der Datei einfügen', d:'', code:'interface wlan0\n    static ip_address=192.168.4.1/24\n    nohook wpa_supplicant'},
+    {t:'Hotspot aktivieren & neu starten', d:'', code:'sudo systemctl unmask hostapd\nsudo systemctl enable hostapd\nsudo systemctl enable dnsmasq\nsudo reboot', tip:'✅ Nach dem Neustart erscheint das WLAN "Lernplattform-Regel7"!'},
+  ]},
+  { id:'server', icon:'🖥️', title:'Lernplattform installieren', badge:'rpi', steps:[
+    {t:'Python installieren', d:'', code:'sudo apt install -y python3-pip python3-venv'},
+    {t:'Projektordner & Umgebung einrichten', d:'', code:'mkdir -p /home/pi/lernplattform\ncd /home/pi/lernplattform\npython3 -m venv venv\nsource venv/bin/activate\npip install flask werkzeug openpyxl'},
+    {t:'Dateien per USB-Stick hochladen', d:'USB-Stick einstecken:', code:'sudo mkdir /mnt/usb\nsudo mount /dev/sda1 /mnt/usb\ncp -r /mnt/usb/lernplattform/* /home/pi/lernplattform/'},
+    {t:'Dienst einrichten', d:'', code:'sudo nano /etc/systemd/system/lernplattform.service'},
+    {t:'Dienst-Konfiguration einfügen', d:'', code:'[Unit]\nDescription=Lernplattform Regel 7\nAfter=network.target\n\n[Service]\nUser=pi\nWorkingDirectory=/home/pi/lernplattform\nExecStart=/home/pi/lernplattform/venv/bin/python app.py\nRestart=always\n\n[Install]\nWantedBy=multi-user.target'},
+    {t:'Dienst starten', d:'', code:'sudo systemctl enable lernplattform\nsudo systemctl start lernplattform', tip:'✅ Plattform läuft unter http://192.168.4.1:5000'},
+  ]},
+  { id:'klasse', icon:'🎓', title:'Im Unterricht verwenden', badge:'windows', steps:[
+    {t:'Pi einschalten', d:'Powerbank anschließen → WLAN erscheint nach 30 Sek.\nName: Lernplattform-Regel7 | Passwort: Lernplattform2025'},
+    {t:'Lehrkraft-Login', d:'Browser öffnen:', tip:'http://192.168.4.1:5000/lehrer | Login: lehrer / lehrer123'},
+    {t:'Klassenliste importieren', d:'Excel-Datei hochladen:\n• Spalte A: Name\n• Spalte B: Klasse\n→ Zufallspasswörter werden automatisch generiert'},
+    {t:'Passwörter ausdrucken & verteilen', d:'"Passwörter exportieren" klicken → Excel ausdrucken → ausschneiden → verteilen.'},
+    {t:'Schüler:innen verbinden lassen', d:'1. WLAN "Lernplattform-Regel7" verbinden\n2. Browser öffnen\n3. http://192.168.4.1:5000\n4. Zufallspasswort eingeben'},
+    {t:'Fortschritt live beobachten', d:'Lehrkraft-Dashboard zeigt alle Schüler:innen mit Fortschritt — aktualisiert automatisch alle 15 Sekunden.'},
+  ]},
+];
+
+let state = JSON.parse(localStorage.getItem('rpi-standalone') || '{}');
+let cur = 0;
+
+const save = () => localStorage.setItem('rpi-standalone', JSON.stringify(state));
+const countCk = id => Object.values(state[id]||{}).filter(Boolean).length;
+const totalS = () => phases.reduce((s,p)=>s+p.steps.length,0);
+const totalCk = () => phases.reduce((s,p)=>s+countCk(p.id),0);
+
+function updateOverall() {
+  const t=totalS(), c=totalCk();
+  document.getElementById('total-text').textContent=`${c} / ${t} Schritte`;
+  document.getElementById('total-bar').style.width=(c/t*100)+'%';
+  if(c===t) document.getElementById('done-box').classList.add('show');
+}
+
+function buildNav() {
+  const nav=document.getElementById('phase-nav');
+  nav.innerHTML='';
+  phases.forEach((p,i)=>{
+    const done=countCk(p.id)===p.steps.length;
+    const btn=document.createElement('button');
+    btn.className='phase-btn'+(i===cur?' active':done?' done':'');
+    btn.textContent=(done?'✓ ':'')+p.icon+' '+p.title;
+    btn.onclick=()=>goTo(i);
+    nav.appendChild(btn);
+  });
+}
+
+function goTo(i) {
+  document.querySelectorAll('.phase').forEach(p=>p.classList.remove('active'));
+  cur=i;
+  document.getElementById('ph-'+phases[i].id).classList.add('active');
+  buildNav();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function toggle(phId, si) {
+  if(!state[phId]) state[phId]={};
+  state[phId][si]=!state[phId][si];
+  save();
+  const el=document.getElementById(`s-${phId}-${si}`);
+  const ck=document.getElementById(`c-${phId}-${si}`);
+  el.classList.toggle('checked',state[phId][si]);
+  ck.textContent=state[phId][si]?'✓':'';
+  updatePhaseProg(phId);
+  updateOverall();
+  buildNav();
+}
+
+function updatePhaseProg(phId) {
+  const ph=phases.find(p=>p.id===phId);
+  const c=countCk(phId);
+  document.getElementById('pp-'+phId).textContent=`${c} / ${ph.steps.length}`;
+  document.getElementById('pb-'+phId).style.width=(c/ph.steps.length*100)+'%';
+}
+
+function build() {
+  const wrap=document.getElementById('phases-wrap');
+  phases.forEach((ph,pi)=>{
+    const div=document.createElement('div');
+    div.className='phase'+(pi===0?' active':'');
+    div.id='ph-'+ph.id;
+    const badge=ph.badge==='windows'
+      ? '<span class="win-badge">🪟 Auf Windows ausführen</span>'
+      : '<span class="rpi-badge">🍓 Auf dem Raspberry Pi</span>';
+    const ck=countCk(ph.id);
+    div.innerHTML=`
+      <div class="phase-header">
+        <div class="phase-num">Phase ${pi+1} von ${phases.length}</div>
+        <div class="phase-title">${ph.icon} ${ph.title}</div>
+      </div>
+      <div class="phase-body">
+        ${badge}
+        <div class="phase-prog-row"><span style="font-weight:600">Fortschritt</span><span id="pp-${ph.id}">${ck} / ${ph.steps.length}</span></div>
+        <div class="progress-bar" style="margin-bottom:18px;"><div class="progress-fill" id="pb-${ph.id}" style="width:${ck/ph.steps.length*100}%"></div></div>
+        ${ph.steps.map((s,si)=>{
+          const c=state[ph.id]?.[si]||false;
+          return `<div class="step ${c?'checked':''}" id="s-${ph.id}-${si}" onclick="toggle('${ph.id}',${si})">
+            <div class="step-check" id="c-${ph.id}-${si}">${c?'✓':''}</div>
+            <div class="step-content">
+              <div class="step-title">${si+1}. ${s.t}</div>
+              ${s.d?`<div class="step-desc">${s.d.replace(/\n/g,'<br>')}</div>`:''}
+              ${s.code?`<div class="step-code">${s.code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:''}
+              ${s.tip?`<div class="step-tip">💡 ${s.tip}</div>`:''}
+              ${s.warn?`<div class="step-warn">⚠️ ${s.warn}</div>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+        <div class="nav-btns">
+          <button class="btn btn-secondary" onclick="goTo(${pi-1})" ${pi===0?'disabled':''}>← Zurück</button>
+          <button class="btn btn-primary" onclick="goTo(${pi+1})" ${pi===phases.length-1?'disabled':''}>Weiter →</button>
+        </div>
+      </div>`;
+    wrap.appendChild(div);
+  });
+}
+
+build(); buildNav(); updateOverall();
+</script>
+</body>
+</html>

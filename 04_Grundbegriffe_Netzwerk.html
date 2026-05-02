@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wie funktioniert ein Netzwerk?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #f0fafa;
+    --surface: #ffffff;
+    --surface2: #e0f5f5;
+    --accent: #1a9ba8;
+    --accent2: #0e7c88;
+    --text: #0f2f35;
+    --text-dim: #4a7c85;
+    --border: #b2dde0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px 48px;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeUp 0.7s ease forwards;
+  }
+
+  .tag {
+    display: inline-block;
+    background: rgba(26,155,168,0.12);
+    border: 1px solid rgba(26,155,168,0.3);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(26px, 5vw, 38px);
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .subtitle { color: var(--text-dim); font-size: 15px; font-weight: 300; }
+
+  /* Progress dots */
+  .dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+  }
+
+  .dot.active { background: var(--accent); transform: scale(1.3); }
+  .dot.done { background: var(--accent2); }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(26,155,168,0.08);
+    display: none;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .card.active { display: block; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .card-icon {
+    width: 56px; height: 56px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+  .card-name { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text); }
+
+  /* Analogy box */
+  .analogy {
+    background: var(--surface2);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 18px 20px;
+    margin: 20px 0;
+  }
+
+  .analogy-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .analogy p { font-size: 16px; line-height: 1.6; }
+
+  /* Main text */
+  .card-text {
+    font-size: 16px;
+    line-height: 1.8;
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  /* Visual diagram */
+  .diagram {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .diagram-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+
+  .device {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .device .dev-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  .device.highlight { border-color: var(--accent); background: rgba(26,155,168,0.06); }
+
+  .arrow { color: var(--accent); font-size: 20px; font-weight: bold; }
+
+  .ip-badge {
+    display: inline-block;
+    background: rgba(26,155,168,0.15);
+    border: 1px solid rgba(26,155,168,0.3);
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 4px;
+    font-family: monospace;
+  }
+
+  /* Blackout highlight */
+  .blackout-box {
+    background: #fff9e0;
+    border: 1px solid #f0d060;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 20px;
+  }
+
+  .blackout-box .bl-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #b08000;
+    margin-bottom: 6px;
+  }
+
+  .blackout-box p { font-size: 15px; line-height: 1.6; color: #5a4000; }
+
+  /* Quiz */
+  .quiz { margin-top: 24px; }
+  .quiz-q { font-size: 16px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+
+  .quiz-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+
+  .quiz-btn:hover { border-color: var(--accent); background: rgba(26,155,168,0.06); }
+  .quiz-btn.correct { background: rgba(22,163,74,0.1); border-color: #16a34a; color: #15803d; }
+  .quiz-btn.wrong { background: rgba(220,38,38,0.08); border-color: #dc2626; color: #dc2626; }
+
+  .quiz-feedback {
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 15px;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.good { background: rgba(22,163,74,0.1); color: #15803d; border: 1px solid rgba(22,163,74,0.3); }
+  .quiz-feedback.bad { background: rgba(220,38,38,0.08); color: #dc2626; border: 1px solid rgba(220,38,38,0.2); }
+
+  /* Navigation */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-counter { font-size: 13px; color: var(--text-dim); }
+
+  .btn {
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .btn-prev { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-prev:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-next { background: var(--accent); color: white; }
+  .btn-next:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.3; cursor: default; transform: none !important; }
+
+  /* Final screen */
+  .final-screen {
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .final-screen .big-icon { font-size: 56px; margin-bottom: 16px; }
+  .final-screen h2 { font-family: 'Playfair Display', serif; font-size: 28px; margin-bottom: 12px; }
+  .final-screen p { font-size: 16px; line-height: 1.7; color: var(--text-dim); max-width: 500px; margin: 0 auto 24px; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+    text-align: left;
+  }
+
+  .summary-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .summary-item .si-icon { font-size: 20px; margin-bottom: 6px; }
+  .summary-item .si-term { font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 4px; }
+  .summary-item .si-def { font-size: 12px; color: var(--text-dim); line-height: 1.4; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="tag">Stunde 2 · Grundbegriffe · Informatik</div>
+    <h1>Wie funktioniert ein Netzwerk?</h1>
+    <p class="subtitle">5 Begriffe · 5 Minuten · 1 Raspberry Pi</p>
+  </div>
+
+  <div class="dots" id="dots"></div>
+  <div id="cards"></div>
+</div>
+
+<script>
+const slides = [
+  {
+    icon: '🏠',
+    label: 'Begriff 1 von 5',
+    term: 'IP-Adresse',
+    analogy: 'Wie eine Hausnummer',
+    analogyText: 'Jedes Haus in einer Straße hat eine andere Nummer — damit der Postbote weiß wo er hinmuss. Genauso hat jedes Gerät im Netzwerk eine eigene IP-Adresse.',
+    text: 'Eine IP-Adresse ist eine eindeutige Nummer für jedes Gerät im Netzwerk. Zum Beispiel: 192.168.4.2',
+    diagram: `
+      <div class="diagram-row">
+        <div class="device"><span class="dev-icon">💻</span>Laptop<br><span class="ip-badge">192.168.4.2</span></div>
+        <div class="arrow">·</div>
+        <div class="device"><span class="dev-icon">📱</span>Handy<br><span class="ip-badge">192.168.4.3</span></div>
+        <div class="arrow">·</div>
+        <div class="device"><span class="dev-icon">🖥️</span>PC<br><span class="ip-badge">192.168.4.4</span></div>
+      </div>
+      <p style="margin-top:12px; font-size:13px; color:var(--text-dim)">Jedes Gerät hat eine eigene Adresse</p>
+    `,
+    quiz: {
+      q: 'Was ist eine IP-Adresse?',
+      options: ['Ein Passwort für WLAN', 'Eine eindeutige Nummer für jedes Gerät im Netzwerk', 'Der Name des WLANs', 'Eine Art von Virus'],
+      correct: 1,
+      feedback: '✅ Genau! Wie eine Hausnummer — jedes Gerät bekommt eine eigene.'
+    }
+  },
+  {
+    icon: '📮',
+    label: 'Begriff 2 von 5',
+    term: 'Router',
+    analogy: 'Wie ein Postamt',
+    analogyText: 'Das Postamt nimmt Briefe entgegen und schickt sie an die richtige Adresse weiter. Der Router macht dasselbe — er leitet Datenpakete ans richtige Gerät.',
+    text: 'Ein Router verbindet Geräte miteinander und leitet Daten weiter. Er weiß welche IP-Adresse zu welchem Gerät gehört.',
+    diagram: `
+      <div class="diagram-row">
+        <div class="device"><span class="dev-icon">💻</span>Laptop</div>
+        <div class="arrow">→</div>
+        <div class="device highlight"><span class="dev-icon">📡</span>Router<br><span class="ip-badge">192.168.4.1</span></div>
+        <div class="arrow">→</div>
+        <div class="device"><span class="dev-icon">📱</span>Handy</div>
+      </div>
+      <p style="margin-top:12px; font-size:13px; color:var(--text-dim)">Der Router ist die Zentrale</p>
+    `,
+    quiz: {
+      q: 'Was macht ein Router?',
+      options: ['Er speichert Fotos', 'Er leitet Daten ans richtige Gerät weiter', 'Er macht das WLAN schneller', 'Er schützt vor Viren'],
+      correct: 1,
+      feedback: '✅ Richtig! Der Router ist die Zentrale — er weiß wer wohin.'
+    }
+  },
+  {
+    icon: '📶',
+    label: 'Begriff 3 von 5',
+    term: 'WLAN',
+    analogy: 'Wie Funkgerät-Kommunikation',
+    analogyText: 'Zwei Personen mit Funkgeräten können miteinander reden — ohne Kabel, ohne Leitung. WLAN funktioniert genauso: Geräte senden Funksignale hin und her.',
+    text: 'WLAN (WiFi) ist eine drahtlose Verbindung. Geräte kommunizieren über Funksignale — kein Kabel nötig.',
+    diagram: `
+      <div class="diagram-row">
+        <div class="device"><span class="dev-icon">💻</span>Laptop</div>
+        <div class="arrow" style="font-size:14px">📶📶📶</div>
+        <div class="device highlight"><span class="dev-icon">📡</span>WLAN-Router</div>
+        <div class="arrow" style="font-size:14px">📶📶📶</div>
+        <div class="device"><span class="dev-icon">📱</span>Handy</div>
+      </div>
+      <p style="margin-top:12px; font-size:13px; color:var(--text-dim)">Alles über Funk — kein Kabel</p>
+    `,
+    quiz: {
+      q: 'Was ist der Unterschied zwischen WLAN und Kabel?',
+      options: ['WLAN ist immer langsamer', 'WLAN nutzt Funksignale statt Kabel', 'Kabel braucht Strom, WLAN nicht', 'Es gibt keinen Unterschied'],
+      correct: 1,
+      feedback: '✅ Genau! WLAN = Funk. Kabel = physische Leitung.'
+    }
+  },
+  {
+    icon: '🏘️',
+    label: 'Begriff 4 von 5',
+    term: 'Lokales Netzwerk',
+    analogy: 'Wie ein Walkie-Talkie im selben Raum',
+    analogyText: 'Zwei Walkie-Talkies im selben Zimmer können direkt miteinander reden — ohne Telefonmast, ohne Internet. Ein lokales Netzwerk funktioniert genauso.',
+    text: 'Ein lokales Netzwerk (LAN) verbindet Geräte direkt — ohne Internet. Die Geräte reden nur miteinander, nicht mit der Außenwelt.',
+    diagram: `
+      <div class="diagram-row">
+        <div class="device"><span class="dev-icon">💻</span>Laptop<br><span class="ip-badge">192.168.4.2</span></div>
+        <div class="arrow">⟷</div>
+        <div class="device highlight"><span class="dev-icon">🍓</span>Raspberry Pi<br><span class="ip-badge">192.168.4.1</span></div>
+        <div class="arrow">⟷</div>
+        <div class="device"><span class="dev-icon">📱</span>Handy<br><span class="ip-badge">192.168.4.3</span></div>
+      </div>
+      <p style="margin-top:12px; font-size:13px; color:var(--text-dim)">Kein Internet nötig — nur untereinander</p>
+    `,
+    blackout: 'Im Blackout: Kein Internet, kein Mobilfunk — aber das lokale Netzwerk funktioniert trotzdem! Genau das bauen wir gleich.',
+    quiz: {
+      q: 'Braucht ein lokales Netzwerk das Internet?',
+      options: ['Ja, immer', 'Nein — Geräte kommunizieren direkt miteinander', 'Nur für Videos', 'Kommt auf den Router an'],
+      correct: 1,
+      feedback: '✅ Genau richtig! Das ist der Kern: lokal = ohne Internet.'
+    }
+  },
+  {
+    icon: '📡',
+    label: 'Begriff 5 von 5',
+    term: 'Hotspot',
+    analogy: 'Wie ein mobiles Postamt',
+    analogyText: 'Statt eines festen Postamts nimmst du ein tragbares mit dir. Ein Hotspot macht dasselbe: Ein Gerät wird selbst zum Router für andere.',
+    text: 'Ein Hotspot ist ein Gerät das selbst WLAN ausstrahlt. Andere Geräte verbinden sich damit. Der Raspberry Pi wird gleich unser Hotspot.',
+    diagram: `
+      <div class="diagram-row">
+        <div class="device"><span class="dev-icon">💻</span>Laptop</div>
+        <div class="arrow">→</div>
+        <div class="device highlight"><span class="dev-icon">🍓</span>Raspberry Pi<br><span style="font-size:11px; color:var(--accent)">= Hotspot + Router</span></div>
+        <div class="arrow">←</div>
+        <div class="device"><span class="dev-icon">📱</span>Handy</div>
+      </div>
+      <div class="diagram-row" style="margin-top:12px">
+        <div style="font-size:13px; color:var(--text-dim)">🔋 Powerbank · ☀️ Solar · kein Steckdose nötig</div>
+      </div>
+    `,
+    blackout: 'Der Raspberry Pi als Hotspot + Powerbank = funktionierendes Kommunikationsnetz ohne Strom aus der Steckdose und ohne Internet.',
+    quiz: {
+      q: 'Was ist ein Hotspot?',
+      options: ['Ein sehr schnelles Internet', 'Ein Gerät das selbst WLAN für andere ausstrahlt', 'Ein Schutz gegen Hacker', 'Ein Speicherort für Fotos'],
+      correct: 1,
+      feedback: '✅ Perfekt! Der Raspberry Pi wird gleich genau das für uns.'
+    }
+  }
+];
+
+let current = 0;
+let quizAnswered = [];
+
+function renderDots() {
+  const d = document.getElementById('dots');
+  d.innerHTML = '';
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === current ? ' active' : i < current ? ' done' : '');
+    d.appendChild(dot);
+  });
+  // Final dot
+  const fd = document.createElement('div');
+  fd.className = 'dot' + (current >= slides.length ? ' active' : '');
+  d.appendChild(fd);
+}
+
+function renderCard() {
+  const container = document.getElementById('cards');
+  container.innerHTML = '';
+
+  if (current >= slides.length) {
+    // Final screen
+    const card = document.createElement('div');
+    card.className = 'card active';
+    card.innerHTML = `
+      <div class="final-screen">
+        <div class="big-icon">🍓</div>
+        <h2>Bereit für die Demo!</h2>
+        <p>Du kennst jetzt alle 5 Grundbegriffe. Gleich siehst du sie live — am Raspberry Pi.</p>
+        <div class="summary-grid">
+          <div class="summary-item"><div class="si-icon">🏠</div><div class="si-term">IP-Adresse</div><div class="si-def">Eindeutige Nummer für jedes Gerät</div></div>
+          <div class="summary-item"><div class="si-icon">📮</div><div class="si-term">Router</div><div class="si-def">Leitet Daten ans richtige Gerät</div></div>
+          <div class="summary-item"><div class="si-icon">📶</div><div class="si-term">WLAN</div><div class="si-def">Funk-Verbindung ohne Kabel</div></div>
+          <div class="summary-item"><div class="si-icon">🏘️</div><div class="si-term">Lokales Netz</div><div class="si-def">Kommunikation ohne Internet</div></div>
+          <div class="summary-item"><div class="si-icon">📡</div><div class="si-term">Hotspot</div><div class="si-def">Gerät wird selbst zum Router</div></div>
+        </div>
+        <div class="blackout-box">
+          <div class="bl-label">💡 Und jetzt?</div>
+          <p>Verbinde dein Gerät mit dem WLAN <strong>"IBC-Blackout-Net"</strong> und öffne den Browser → <strong>192.168.4.1</strong></p>
+        </div>
+      </div>
+    `;
+    const nav = document.createElement('div');
+    nav.className = 'nav';
+    nav.innerHTML = `
+      <button class="btn btn-prev" onclick="prev()">← Zurück</button>
+      <span class="nav-counter">Ende</span>
+      <button class="btn btn-next" onclick="restart()">↩ Nochmal</button>
+    `;
+    card.appendChild(nav);
+    container.appendChild(card);
+    return;
+  }
+
+  const s = slides[current];
+  const card = document.createElement('div');
+  card.className = 'card active';
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-icon">${s.icon}</div>
+      <div>
+        <div class="card-title">${s.label}</div>
+        <div class="card-name">${s.term}</div>
+      </div>
+    </div>
+    <div class="analogy">
+      <div class="analogy-label">🔍 Analogie</div>
+      <p><strong>${s.analogy}</strong> — ${s.analogyText}</p>
+    </div>
+    <p class="card-text">${s.text}</p>
+    <div class="diagram">${s.diagram}</div>
+    ${s.blackout ? `<div class="blackout-box"><div class="bl-label">⚡ Blackout-Bezug</div><p>${s.blackout}</p></div>` : ''}
+    <div class="quiz">
+      <div class="quiz-q">🧠 Kurz-Check: ${s.quiz.q}</div>
+      <div class="quiz-options" id="options-${current}">
+        ${s.quiz.options.map((o, i) => `<button class="quiz-btn" onclick="answer(${i})" id="opt-${current}-${i}">${o}</button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="feedback-${current}"></div>
+    </div>
+  `;
+
+  // Restore answered state
+  if (quizAnswered[current] !== undefined) {
+    setTimeout(() => restoreQuiz(), 50);
+  }
+
+  const nav = document.createElement('div');
+  nav.className = 'nav';
+  nav.innerHTML = `
+    <button class="btn btn-prev" onclick="prev()" ${current === 0 ? 'disabled' : ''}>← Zurück</button>
+    <span class="nav-counter">${current + 1} / ${slides.length}</span>
+    <button class="btn btn-next" onclick="next()" id="btn-next">Weiter →</button>
+  `;
+  card.appendChild(nav);
+  container.appendChild(card);
+}
+
+function answer(i) {
+  const s = slides[current];
+  quizAnswered[current] = i;
+  restoreQuiz();
+}
+
+function restoreQuiz() {
+  const s = slides[current];
+  const i = quizAnswered[current];
+  if (i === undefined) return;
+  const opts = document.querySelectorAll(`#options-${current} .quiz-btn`);
+  opts.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (idx === s.quiz.correct) btn.classList.add('correct');
+    else if (idx === i && i !== s.quiz.correct) btn.classList.add('wrong');
+  });
+  const fb = document.getElementById(`feedback-${current}`);
+  if (fb) {
+    if (i === s.quiz.correct) {
+      fb.className = 'quiz-feedback show good';
+      fb.textContent = s.quiz.feedback;
+    } else {
+      fb.className = 'quiz-feedback show bad';
+      fb.textContent = `❌ Nicht ganz — die richtige Antwort ist: "${s.quiz.options[s.quiz.correct]}"`;
+    }
+  }
+}
+
+function next() {
+  current++;
+  renderDots();
+  renderCard();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prev() {
+  if (current > 0) {
+    current--;
+    renderDots();
+    renderCard();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function restart() {
+  current = 0;
+  quizAnswered = [];
+  renderDots();
+  renderCard();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+renderDots();
+renderCard();
+</script>
+</body>
+</html>

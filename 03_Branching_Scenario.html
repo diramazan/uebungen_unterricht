@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ein Tag ohne Internet — Branching Scenario</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #f0fafa;
+    --surface: #ffffff;
+    --surface2: #e0f5f5;
+    --accent: #1a9ba8;
+    --accent2: #0e7c88;
+    --danger: #dc2626;
+    --warn: #d97706;
+    --success: #16a34a;
+    --text: #0f2f35;
+    --text-dim: #4a7c85;
+    --border: #b2dde0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-image: 
+      radial-gradient(ellipse at 20% 20%, rgba(26,155,168,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(26,155,168,0.05) 0%, transparent 60%);
+  }
+
+  #app {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.8s ease forwards;
+  }
+
+  .header .rule-tag {
+    display: inline-block;
+    background: rgba(26,155,168,0.12);
+    border: 1px solid rgba(26,155,168,0.35);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(24px, 5vw, 38px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  /* Progress */
+  .progress-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s ease forwards;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  /* Scene card */
+  .scene {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(26,155,168,0.10);
+  }
+
+  .scene::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 16px 16px 0 0;
+  }
+
+  .scene.end-good::before { background: var(--success); }
+  .scene.end-warn::before { background: var(--warn); }
+  .scene.end-bad::before { background: var(--danger); }
+  .scene.end-final::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+  .scene-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .scene-label .icon {
+    font-size: 18px;
+  }
+
+  .scene-label .title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .scene-label .status-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+
+  .badge-good { background: rgba(76,175,125,0.2); color: var(--success); }
+  .badge-warn { background: rgba(232,148,58,0.2); color: var(--warn); }
+  .badge-bad { background: rgba(232,85,85,0.2); color: var(--danger); }
+
+  .scene-text {
+    font-size: 16px;
+    line-height: 1.8;
+    font-weight: 300;
+    color: var(--text);
+    white-space: pre-line;
+  }
+
+  .scene-text strong {
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .scene-text em {
+    font-style: italic;
+    color: var(--text-dim);
+  }
+
+  /* Letter styling */
+  .letter-box {
+    background: #f8faff;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin: 20px 0;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.9;
+    color: #334155;
+    white-space: pre-line;
+  }
+
+  .letter-meta {
+    font-family: 'Source Sans 3', sans-serif;
+    font-style: normal;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Question */
+  .question {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .question p {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Buttons */
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .choice-btn:hover {
+    background: rgba(26,155,168,0.08);
+    border-color: var(--accent);
+    color: var(--accent2);
+    transform: translateX(4px);
+  }
+
+  .choice-btn .choice-letter {
+    min-width: 28px;
+    height: 28px;
+    background: rgba(26,155,168,0.12);
+    border: 1px solid rgba(26,155,168,0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0;
+  }
+
+  /* Reflection box */
+  .reflection {
+    margin-top: 24px;
+    background: rgba(26,155,168,0.07);
+    border: 1px solid rgba(26,155,168,0.25);
+    border-radius: 10px;
+    padding: 18px 22px;
+  }
+
+  .reflection .ref-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+
+  .reflection p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #334155;
+    font-style: italic;
+  }
+
+  /* End actions */
+  .end-actions {
+    margin-top: 28px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-restart {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    color: var(--text-dim);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-restart:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-next {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    color: #ffffff;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-next:hover {
+    background: var(--accent2);
+    transform: translateY(-1px);
+  }
+
+  /* Outcome icons */
+  .outcome-icon {
+    font-size: 40px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* Path tracker */
+  .path-tracker {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .path-step {
+    font-size: 11px;
+    padding: 3px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-dim);
+  }
+
+  .path-step.active {
+    background: rgba(26,155,168,0.12);
+    border-color: rgba(26,155,168,0.35);
+    color: var(--accent);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    .scene { padding: 24px 20px; }
+    .letter-box { padding: 18px 20px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="rule-tag">Regel 7 · Informatik · Sek II</div>
+    <h1>Ein Tag ohne Internet</h1>
+    <p>Lasst Euch nicht Eurer menschlichen Potenziale berauben</p>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress" style="width: 10%"></div>
+  </div>
+  <div id="scene-container"></div>
+</div>
+
+<script>
+const scenes = {
+  start: {
+    icon: '💻',
+    title: 'Sonntagabend',
+    progress: 10,
+    type: 'normal',
+    content: `18:47 Uhr. Sonntag.
+
+Du liegst auf dem Sofa. Dein Handy zeigt 23 ungelesene Nachrichten aus der Klassengruppe — alle über dasselbe Thema. Die Informatik-Abgabe morgen früh.
+
+<em>"Projektarbeit: Wie funktioniert ein lokales Netzwerk?"</em>
+
+Du hast das Thema schon seit zwei Wochen. Du erinnerst dich, dass du mal kurz gegoogelt hast. Dann kam Netflix dazwischen. Dann das Wochenende.
+
+Jetzt ist es Sonntagabend. Die Abgabe ist morgen um 8:00 Uhr.
+
+Du öffnest den Laptop. Der Cursor blinkt. Das leere Dokument starrt dich an.
+
+Draußen wird es dunkel.`,
+    question: 'Was tust du?',
+    choices: [
+      { letter: 'A', text: 'Ich arbeite es wirklich durch — YouTube, ausprobieren, bis ich es verstehe', next: 'pathA' },
+      { letter: 'B', text: 'Ich lasse KI alles zusammenfassen und lese es grob durch', next: 'pathB' },
+      { letter: 'C', text: 'Ich kopiere den KI-Text direkt — wird schon niemand merken', next: 'pathC' }
+    ]
+  },
+
+  pathA: {
+    icon: '🧠',
+    title: 'Pfad A — Du arbeitest es wirklich durch',
+    progress: 30,
+    type: 'normal',
+    content: `Du machst dir einen Tee. Du öffnest ein YouTube-Video. Dann noch eines. Du liest, probierst aus, stellst dir Fragen.
+
+Was passiert eigentlich wenn zwei Handys im selben WLAN sind? Brauchen sie dafür das Internet? Du tippst es ein. Du liest die Antwort. Du liest sie nochmal. Dann — klick. Du verstehst es.
+
+IP-Adressen. Router. Lokales Netzwerk. Hotspot. Die Begriffe werden zu Bildern in deinem Kopf.
+
+Es ist 23:15. Du bist müde. Aber du weißt es.
+
+---
+
+Nächster Tag. 8. Stunde. Informatik.
+
+Die Lehrerin schaut in die Runde. Dann direkt zu dir.
+
+<em>"Erklär mir kurz: Wenn zwei Geräte im selben WLAN sind — brauchen sie das Internet um miteinander zu reden?"</em>
+
+Stille im Raum. Alle schauen dich an.
+
+Du weißt die Antwort. Sofort. Ohne nachzudenken.`,
+    question: 'Wie antwortest du?',
+    choices: [
+      { letter: 'A', text: 'Ich erkläre es ruhig und klar — ich hab\'s wirklich verstanden', next: 'endAA' },
+      { letter: 'B', text: 'Ich bin selbst überrascht wie sicher ich bin', next: 'endAB' }
+    ]
+  },
+
+  pathB: {
+    icon: '📋',
+    title: 'Pfad B — KI fasst zusammen',
+    progress: 30,
+    type: 'normal',
+    content: `Du öffnest die KI. Tippst die Frage ein. Dreißig Sekunden später: eine perfekte Zusammenfassung. IP-Adressen, Router, lokales Netzwerk — alles drin, alles ordentlich erklärt.
+
+Du liest es. Irgendwie. Du scrollst, nickst, denkst <em>"ja, klingt richtig"</em>.
+
+Du fügst es ins Dokument ein, schreibst ein paar Sätze dazu. 21:30 Uhr. Fertig.
+
+Du schaust noch eine Serie. Schläfst gut.
+
+---
+
+Nächster Tag. Die Lehrerin fragt:
+
+<em>"Braucht ein lokales Netzwerk das Internet?"</em>
+
+Du öffnest den Mund. Dann schließt du ihn wieder.
+
+Du... glaubst nein? Du erinnerst dich an das Wort "lokal". Aber warum genau kein Internet nötig ist — das Bild dazu fehlt in deinem Kopf.
+
+Der Satz stand in deiner Abgabe. Du hast ihn selbst getippt.
+Du weißt nicht mehr was er bedeutet.`,
+    question: 'Was sagst du?',
+    choices: [
+      { letter: 'A', text: 'Ich sage was ich weiß — auch wenn es unvollständig klingt', next: 'endBA' },
+      { letter: 'B', text: 'Ich sage ehrlich: ich bin mir nicht sicher', next: 'endBB' }
+    ]
+  },
+
+  pathC: {
+    icon: '😴',
+    title: 'Pfad C — Copy. Paste. Schlafen.',
+    progress: 30,
+    type: 'normal',
+    content: `Du öffnest die KI. Tippst die Frage ein. Der Text kommt. Er ist gut — besser als du es je schreiben könntest. Fachbegriffe, klare Struktur, sogar ein Beispiel mit IP-Adressen.
+
+Du liest die erste Zeile. Dann kopierst du alles. Ctrl+C. Ctrl+V.
+
+Du änderst zwei Wörter damit es nicht auffällt. Speicherst. Schickst ab.
+
+20:03 Uhr. Du legst den Laptop weg. Du schaust noch zwei Stunden Netflix. Du schläfst tief und fest.
+
+---
+
+Nächster Tag. Informatik.
+
+Die Lehrerin lächelt. <em>"Ich hab eure Abgaben gelesen. Sehr interessant."</em>
+
+Dann: <em>"Braucht ein lokales Netzwerk das Internet?"</em>
+
+Stille. Du öffnest den Mund. Nichts kommt.
+
+Der Text war perfekt — aber er war nie in deinem Kopf. Er war nur auf deinem Bildschirm.
+
+<em>"Ich... weiß es nicht mehr genau."</em>
+
+Die Lehrerin schaut dich an. Lange. Ohne etwas zu sagen.`,
+    question: 'Was passiert als nächstes?',
+    choices: [
+      { letter: 'A', text: 'Sie geht weiter — diesmal keine Nachfrage', next: 'endCA' },
+      { letter: 'B', text: 'Sie fragt weiter nach — und ich stecke komplett fest', next: 'endCB' }
+    ]
+  },
+
+  endAA: {
+    icon: '🌟',
+    title: 'Das Wissen sitzt',
+    progress: 80,
+    type: 'end-good',
+    badge: { text: 'Stark', cls: 'badge-good' },
+    outcomeIcon: '✅',
+    content: `<em>"Nein,"</em> sagst du. <em>"Lokales Netzwerk bedeutet: die Geräte reden direkt miteinander. Der Router verteilt die Adressen — aber das Internet brauchen sie dafür nicht."</em>
+
+Die Lehrerin nickt. Jemand in der zweiten Reihe schreibt es auf.
+
+Das Wissen sitzt. Nicht weil du es auswendig gelernt hast — sondern weil du es verstanden hast.
+
+---
+
+Drei Wochen später. <strong>14. März. 06:22 Uhr.</strong>
+
+Du wachst auf und dein Handy zeigt — nichts. Kein Empfang. Kein WLAN. Du gehst ins Wohnzimmer. Jemand schaut aus dem Fenster. Die Straßenlaternen sind aus. Die Ampeln auch.
+
+Großer Blackout. Kein Internet. Kein Strom. Niemand weiß wie lange.
+
+Du gehst in dein Zimmer. Raspberry Pi. Powerbank. Du weißt was zu tun ist.
+
+Eine Stunde später sitzen zwölf Nachbarn im Hausgang und schreiben Nachrichten über dein lokales Netzwerk.
+
+<em>"Woher weißt du wie das geht?"</em>
+
+<strong>"Schule." 😎</strong>`,
+    reflection: 'Was wäre anders gewesen wenn die KI das für dich gelernt hätte?'
+  },
+
+  endAB: {
+    icon: '💡',
+    title: 'Mehr als du dachtest',
+    progress: 80,
+    type: 'end-good',
+    badge: { text: 'Gut', cls: 'badge-good' },
+    outcomeIcon: '✅',
+    content: `<em>"Ich glaube... nein?"</em> sagst du zögernd. <em>"Weil lokal bedeutet — die Geräte reden direkt, ohne durch das Internet zu müssen."</em>
+
+Die Lehrerin lächelt. <em>"Genau."</em>
+
+Du bist selbst überrascht. Du dachtest du hättest es kaum verstanden. Aber es war da — weil du wirklich nachgedacht hast.
+
+---
+
+Drei Wochen später. Blackout.
+
+Du stehst vor dem Raspberry Pi. Du bist unsicher. Du probierst. Machst einen Fehler. Probierst nochmal.
+
+Nach zwei Stunden läuft es.
+
+Nicht perfekt. Nicht schnell. Aber es <strong>funktioniert.</strong>
+
+Deine Nachbarin schaut dich an: <em>"Hast du das gerade einfach so hingebaut?"</em>
+
+Du zuckst mit den Schultern. Aber innerlich weißt du: Ja. Weil ich es damals wirklich versucht habe zu verstehen.`,
+    reflection: 'Wann ist Anstrengung mehr wert als ein perfektes Ergebnis?'
+  },
+
+  endBA: {
+    icon: '⚡',
+    title: 'Wörter ohne Bilder',
+    progress: 80,
+    type: 'end-warn',
+    badge: { text: 'Knapp', cls: 'badge-warn' },
+    outcomeIcon: '⚠️',
+    content: `<em>"Nein... ich glaube es braucht kein Internet. Weil es lokal ist."</em>
+
+Die Lehrerin nickt, aber ihr Blick sagt mehr als ihr Nicken.
+
+Du hast die richtigen Wörter gesagt. Aber du weißt selbst: Es war nur ein Wort. Kein Bild. Kein echtes Verständnis dahinter.
+
+---
+
+Drei Wochen später. Blackout.
+
+Du erinnerst dich: Raspberry Pi. Lokales Netzwerk. Du hast es in der Abgabe geschrieben.
+
+Aber wie genau? Welche Einstellungen? Was wenn es nicht funktioniert?
+
+Du sitzt zwei Stunden vor dem Gerät. Probierst. Suchst in deinem Kopf nach Bildern die nicht da sind.
+
+Am Ende funktioniert es — fast zufällig. Du hast einen Schritt richtig geraten.
+
+Dein Nachbar schaut zu. <em>"Du weißt schon was du machst, oder?"</em>
+
+Du sagst ja. Aber du weißt es nicht wirklich.`,
+    reflection: 'Was ist der Unterschied zwischen "die richtigen Wörter kennen" und "wirklich verstehen"?'
+  },
+
+  endBB: {
+    icon: '🌫️',
+    title: 'Konsumiert, nicht gelernt',
+    progress: 80,
+    type: 'end-warn',
+    badge: { text: 'Zu wenig', cls: 'badge-warn' },
+    outcomeIcon: '⚠️',
+    content: `<em>"Ich... bin mir nicht sicher."</em>
+
+Die Lehrerin schaut dich an. Dann schaut sie auf deine Abgabe. Dann wieder zu dir.
+
+Sie sagt nichts. Sie muss nichts sagen.
+
+---
+
+Drei Wochen später. Blackout.
+
+Jemand aus deiner Wohnung fragt ob du nicht irgendwas mit Netzwerken hattest in der Schule. Du nickst. Die Person schaut dich erwartungsvoll an.
+
+Du öffnest den Mund. Schließt ihn wieder.
+
+Du weißt dass es irgendwie geht. Du weißt dass es einen Raspberry Pi gibt. Du weißt das Wort "lokal".
+
+Aber was genau zu tun ist — kein Bild. Keine Ahnung. Die KI hat es gewusst. Du hast es abgegeben. Das war alles.
+
+Dein Nachbar — Jahrgang 1979, hat sowas mal in einem Kurs gelernt — baut das Netzwerk auf.
+
+Du schaust zu. Als wäre es Magie.
+
+Es ist keine Magie. Es ist Schulwissen. Nur nicht deins.`,
+    reflection: 'Ab wann ist KI-Hilfe zu viel?'
+  },
+
+  endCA: {
+    icon: '🎲',
+    title: 'Diesmal Glück',
+    progress: 80,
+    type: 'end-bad',
+    badge: { text: 'Riskant', cls: 'badge-bad' },
+    outcomeIcon: '❌',
+    content: `Die Lehrerin schaut dich einen Moment lang an. Dann wendet sie sich ab.
+
+<em>"Gut. Nächste Frage."</em>
+
+Du atmest aus. Diesmal gut gegangen.
+
+Aber in dieser Nacht liegst du wach. Du denkst an den Moment wo dein Mund offen war und nichts kam. Du hattest ein perfektes Referat abgegeben — über etwas das du nicht verstehst.
+
+---
+
+Drei Wochen später. Blackout.
+
+Dein Nachbar klopft an die Tür. Er hat gehört du hast ein Referat über Netzwerke geschrieben.
+
+<em>"Kannst du uns helfen? Wir brauchen irgendeinen Weg um zu kommunizieren."</em>
+
+Du schaust auf dein totes Handy. Auf den Raspberry Pi im Regal. Du weißt den Namen. Du weißt wie das Ding aussieht.
+
+Aber was jetzt zu tun ist — keine Ahnung.
+
+<em>"Ich... hab das nicht wirklich gelernt. Tut mir leid."</em>
+
+Er nickt. Geht weiter. Klopft bei der nächsten Tür.
+
+Du stehst in deiner Wohnung. Allein. Mit deiner Matura.`,
+    reflection: 'Was hast du wirklich verloren — die Note oder das Wissen?'
+  },
+
+  endCB: {
+    icon: '💔',
+    title: 'Das eigentliche Problem',
+    progress: 80,
+    type: 'end-bad',
+    badge: { text: 'Verloren', cls: 'badge-bad' },
+    outcomeIcon: '❌',
+    content: `<em>"Was genau meinst du mit lokal?"</em> fragt die Lehrerin ruhig.
+
+Stille.
+
+<em>"Beschreib mir was passiert wenn zwei Handys im selben Netzwerk eine Nachricht schicken."</em>
+
+Stille.
+
+Du spürst wie dein Gesicht heiß wird. Du kennst die Wörter. Router. IP. Lokal. Sie stehen in deiner Abgabe. Du hast sie selbst getippt.
+
+Aber sie bedeuten dir nichts. Sie waren nie in deinem Kopf.
+
+---
+
+Drei Wochen später. Blackout.
+
+Irgendwo in der Stadt baut jemand ein lokales Netzwerk auf. Raspberry Pi, Powerbank. Menschen können wieder Nachrichten schicken. Hilfe organisieren.
+
+Dieser jemand hat das in der Schule gelernt. Wirklich gelernt.
+
+Du hast eine Matura in Informatik.
+
+<strong>Und weißt nicht wie.</strong>
+
+Das ist nicht die Schuld der KI. Die KI hat nur gemacht was du ihr gesagt hast.`,
+    reflection: 'Was bedeutet es wenn du Glück brauchst um durchzukommen?'
+  },
+
+  final: {
+    icon: '🕯️',
+    title: 'Und jetzt?',
+    progress: 100,
+    type: 'end-final',
+    outcomeIcon: '🕯️',
+    content: `Du hast gerade eine Entscheidung getroffen — und ihre Konsequenzen erlebt.
+
+Nicht in der Realität. Aber nah genug.
+
+<strong>Lies jetzt den Brief nochmal.</strong>
+
+Fühlt er sich anders an als beim ersten Mal?
+
+---
+
+Die Frage ist nicht: <em>Darf man KI benutzen?</em>
+
+Die Frage ist: <em>Was bleibt in meinem Kopf — wenn der Bildschirm aus ist?</em>
+
+Das ist Regel 7.
+<em>Lasst Euch nicht Eurer menschlichen Potenziale berauben.</em>`,
+    isFinal: true
+  }
+};
+
+let pathHistory = [];
+
+function renderScene(sceneId) {
+  const scene = scenes[sceneId];
+  if (!scene) return;
+
+  pathHistory.push(sceneId);
+
+  document.getElementById('progress').style.width = scene.progress + '%';
+
+  const container = document.getElementById('scene-container');
+  container.innerHTML = '';
+
+  const div = document.createElement('div');
+  div.className = `scene ${scene.type || ''}`;
+
+  // Path tracker
+  if (pathHistory.length > 1) {
+    const tracker = document.createElement('div');
+    tracker.className = 'path-tracker';
+    pathHistory.forEach((id, i) => {
+      const step = document.createElement('div');
+      step.className = 'path-step' + (i === pathHistory.length - 1 ? ' active' : '');
+      step.textContent = scenes[id]?.title?.split('—')[0].trim() || id;
+      tracker.appendChild(step);
+    });
+    div.appendChild(tracker);
+  }
+
+  // Label
+  const label = document.createElement('div');
+  label.className = 'scene-label';
+  label.innerHTML = `<span class="icon">${scene.icon}</span><span class="title">${scene.title}</span>`;
+  if (scene.badge) {
+    label.innerHTML += `<span class="status-badge ${scene.badge.cls}">${scene.badge.text}</span>`;
+  }
+  div.appendChild(label);
+
+  // Outcome icon
+  if (scene.outcomeIcon && scene.type !== 'normal') {
+    const oi = document.createElement('div');
+    oi.className = 'outcome-icon';
+    oi.textContent = scene.outcomeIcon;
+    div.appendChild(oi);
+  }
+
+  // Content
+  const text = document.createElement('div');
+  text.className = 'scene-text';
+  text.innerHTML = scene.content.replace(/\n/g, '<br>');
+  div.appendChild(text);
+
+  // Choices
+  if (scene.choices) {
+    const q = document.createElement('div');
+    q.className = 'question';
+
+    // Timer bar — only for scenes with choices
+    const timerWrap = document.createElement('div');
+    timerWrap.style.cssText = 'margin-bottom:14px;';
+    const timerLabel = document.createElement('div');
+    timerLabel.style.cssText = 'font-size:12px; color:var(--text-dim); margin-bottom:6px; display:flex; justify-content:space-between;';
+    timerLabel.innerHTML = '<span>⏳ Bitte erst lesen...</span><span id="timer-count">15</span>';
+    const timerTrack = document.createElement('div');
+    timerTrack.style.cssText = 'height:4px; background:var(--border); border-radius:2px; overflow:hidden;';
+    const timerFill = document.createElement('div');
+    timerFill.id = 'timer-fill';
+    timerFill.style.cssText = 'height:100%; width:100%; background:var(--accent); border-radius:2px; transition:width 1s linear;';
+    timerTrack.appendChild(timerFill);
+    timerWrap.appendChild(timerLabel);
+    timerWrap.appendChild(timerTrack);
+    q.appendChild(timerWrap);
+
+    q.innerHTML += `<p>${scene.question}</p>`;
+    const choices = document.createElement('div');
+    choices.className = 'choices';
+    const btns = [];
+    scene.choices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<span class="choice-letter">${choice.letter}</span>${choice.text}`;
+      btn.disabled = true;
+      btn.style.opacity = '0.4';
+      btn.style.cursor = 'not-allowed';
+      btn.onclick = () => {
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        setTimeout(() => renderScene(choice.next), 300);
+      };
+      choices.appendChild(btn);
+      btns.push(btn);
+    });
+    q.appendChild(choices);
+    div.appendChild(q);
+
+    // Start countdown after render
+    let secs = 15;
+    const interval = setInterval(() => {
+      secs--;
+      const countEl = document.getElementById('timer-count');
+      const fillEl = document.getElementById('timer-fill');
+      if (countEl) countEl.textContent = secs;
+      if (fillEl) fillEl.style.width = (secs / 15 * 100) + '%';
+      if (secs <= 0) {
+        clearInterval(interval);
+        btns.forEach(b => {
+          b.disabled = false;
+          b.style.opacity = '1';
+          b.style.cursor = 'pointer';
+        });
+        if (timerLabel) timerLabel.innerHTML = '<span style="color:var(--success)">✅ Jetzt kannst du wählen</span>';
+        if (timerTrack) timerTrack.style.display = 'none';
+      }
+    }, 1000);
+  }
+
+  // Reflection
+  if (scene.reflection) {
+    const ref = document.createElement('div');
+    ref.className = 'reflection';
+    ref.innerHTML = `<div class="ref-label">💬 Reflexionsfrage</div><p>${scene.reflection}</p>`;
+    div.appendChild(ref);
+  }
+
+  // End actions
+  if (scene.choices === undefined) {
+    const actions = document.createElement('div');
+    actions.className = 'end-actions';
+
+    const restart = document.createElement('button');
+    restart.className = 'btn-restart';
+    restart.textContent = '↩ Nochmal versuchen';
+    restart.onclick = () => {
+      pathHistory = [];
+      renderScene('start');
+    };
+    actions.appendChild(restart);
+
+    if (!scene.isFinal) {
+      const next = document.createElement('button');
+      next.className = 'btn-next';
+      next.textContent = 'Weiter → Brief nochmal lesen';
+      next.onclick = () => renderScene('final');
+      actions.appendChild(next);
+    }
+
+    div.appendChild(actions);
+  }
+
+  container.appendChild(div);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+renderScene('start');
+</script>
+</body>
+</html>

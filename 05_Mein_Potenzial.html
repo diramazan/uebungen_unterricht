@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mein Potenzial — Einheit 5</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+:root { --bg:#f0fafa; --surface:#fff; --surface2:#e0f5f5; --accent:#1a9ba8; --accent2:#0e7c88; --text:#0f2f35; --dim:#4a7c85; --border:#b2dde0; --green:#16a34a; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Source Sans 3',sans-serif; background:var(--bg); color:var(--text); padding:24px 16px 64px; }
+header { background:var(--accent2); color:white; padding:14px 24px; margin:-24px -16px 32px; display:flex; align-items:center; gap:12px; }
+header .logo { font-family:'Playfair Display',serif; font-size:18px; }
+header .tag { font-size:11px; opacity:0.7; margin-left:auto; letter-spacing:1px; text-transform:uppercase; }
+.wrap { max-width:700px; margin:0 auto; animation:fadeUp 0.5s ease forwards; }
+.page-tag { display:inline-block; background:rgba(26,155,168,0.12); border:1px solid rgba(26,155,168,0.3); color:var(--accent); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:3px 12px; border-radius:20px; margin-bottom:12px; }
+h1 { font-family:'Playfair Display',serif; font-size:30px; margin-bottom:6px; }
+.subtitle { color:var(--dim); font-size:15px; margin-bottom:24px; }
+.card { background:white; border:1px solid var(--border); border-radius:14px; padding:24px; box-shadow:0 2px 12px rgba(26,155,168,0.07); margin-bottom:20px; }
+table { width:100%; border-collapse:collapse; }
+th { background:var(--accent); color:white; padding:10px 14px; font-size:13px; text-align:left; }
+td { padding:0; border:1px solid var(--border); }
+td input { width:100%; padding:10px 14px; border:none; font-family:'Source Sans 3',sans-serif; font-size:13px; background:transparent; }
+td input:focus { outline:none; background:var(--surface2); }
+tr:nth-child(even) td { background:rgba(26,155,168,0.03); }
+.goal-box { background:var(--surface2); border:2px solid var(--accent); border-radius:12px; padding:20px 24px; margin:20px 0; }
+.goal-box label { font-size:13px; font-weight:700; color:var(--accent2); display:block; margin-bottom:8px; }
+.goal-box input { width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-family:'Source Sans 3',sans-serif; font-size:14px; }
+.goal-box input:focus { outline:none; border-color:var(--accent); }
+.btn { padding:11px 24px; border-radius:9px; font-family:'Source Sans 3',sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; background:var(--accent); color:white; }
+.btn:hover { background:var(--accent2); }
+.done-box { background:rgba(22,163,74,0.1); border:1px solid rgba(22,163,74,0.3); border-radius:12px; padding:20px; text-align:center; display:none; margin-top:16px; }
+.done-box.show { display:block; }
+.result-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:20px; display:none; margin-top:16px; }
+.result-card.show { display:block; }
+.result-card h3 { font-size:15px; font-weight:700; margin-bottom:12px; color:var(--accent2); }
+.result-item { display:flex; gap:10px; margin-bottom:8px; font-size:14px; }
+.result-item .ri-label { font-weight:600; min-width:60px; color:var(--dim); }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Regel 7 — Lasst Euch nicht Eurer menschlichen Potenziale berauben</div>
+  <span class="tag">Einheit 5 · Reflexion</span>
+</header>
+
+<div class="wrap">
+  <div class="page-tag">Einheit 5 · Reflexion</div>
+  <h1>🪞 Mein Potenzial</h1>
+  <p class="subtitle">Was kann NUR du? Was gibst du an KI ab?</p>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>🤖 Was gibt die KI für mich ab?</th>
+          <th>🧠 Was kann NUR ICH?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><input type="text" id="ki1" placeholder="z.B. Texte zusammenfassen"></td><td><input type="text" id="ich1" placeholder="z.B. Eigene Erfahrungen einbringen"></td></tr>
+        <tr><td><input type="text" id="ki2" placeholder="z.B. Übersetzen"></td><td><input type="text" id="ich2" placeholder="z.B. Kritisch hinterfragen"></td></tr>
+        <tr><td><input type="text" id="ki3" placeholder="..."></td><td><input type="text" id="ich3" placeholder="..."></td></tr>
+        <tr><td><input type="text" id="ki4" placeholder="..."></td><td><input type="text" id="ich4" placeholder="..."></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="goal-box">
+    <label>🎯 Mein persönliches Ziel:</label>
+    <input type="text" id="goal" placeholder="Ich nutze KI für _______, aber _______ mache ich selbst — weil das mein Potenzial ist.">
+  </div>
+
+  <button class="btn" onclick="speichern()">Speichern & abschließen ✓</button>
+
+  <div class="result-card" id="result-card">
+    <h3>📋 Deine Eingaben</h3>
+    <div id="result-content"></div>
+  </div>
+
+  <div class="done-box" id="done-box">
+    ✅ <strong>Reflexion gespeichert!</strong> Du hast alle Einheiten abgeschlossen — gut gemacht!
+  </div>
+</div>
+<script>
+function speichern() {
+  const ki = [1,2,3,4].map(i => document.getElementById('ki'+i).value).filter(Boolean);
+  const ich = [1,2,3,4].map(i => document.getElementById('ich'+i).value).filter(Boolean);
+  const goal = document.getElementById('goal').value;
+
+  const rc = document.getElementById('result-content');
+  rc.innerHTML = '';
+  if (ki.length) rc.innerHTML += `<div style="margin-bottom:10px;"><strong style="color:var(--dim);font-size:12px;">KI übernimmt:</strong><br>${ki.map(t=>`• ${t}`).join('<br>')}</div>`;
+  if (ich.length) rc.innerHTML += `<div style="margin-bottom:10px;"><strong style="color:var(--green);font-size:12px;">Nur ich kann:</strong><br>${ich.map(t=>`• ${t}`).join('<br>')}</div>`;
+  if (goal) rc.innerHTML += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-style:italic;color:var(--accent2);">"${goal}"</div>`;
+
+  document.getElementById('result-card').classList.add('show');
+  document.getElementById('done-box').classList.add('show');
+  document.querySelector('button').disabled = true;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KI oder Mensch? — Zuordnungsaufgabe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #f0fafa;
+    --surface: #ffffff;
+    --surface2: #e0f5f5;
+    --accent: #1a9ba8;
+    --accent2: #0e7c88;
+    --text: #0f2f35;
+    --text-dim: #4a7c85;
+    --border: #b2dde0;
+    --human: #16a34a;
+    --human-bg: #f0fff4;
+    --human-border: #86efac;
+    --ki: #2563eb;
+    --ki-bg: #eff6ff;
+    --ki-border: #93c5fd;
+    --both: #d97706;
+    --both-bg: #fffbeb;
+    --both-border: #fcd34d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .tag {
+    display: inline-block;
+    background: rgba(26,155,168,0.12);
+    border: 1px solid rgba(26,155,168,0.3);
+    color: var(--accent);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 4px 14px; border-radius: 20px;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(24px, 5vw, 36px);
+    margin-bottom: 8px;
+  }
+
+  .subtitle { color: var(--text-dim); font-size: 15px; font-weight: 300; margin-bottom: 6px; }
+
+  .instruction {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 28px;
+    text-align: center;
+  }
+
+  /* Card pool */
+  .pool-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 10px;
+  }
+
+  .card-pool {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 20px;
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    min-height: 80px;
+    margin-bottom: 28px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .card-pool.drag-over {
+    border-color: var(--accent);
+    background: rgba(26,155,168,0.04);
+  }
+
+  /* Drop zones */
+  .zones {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 640px) {
+    .zones { grid-template-columns: 1fr; }
+  }
+
+  .zone {
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 200px;
+    transition: all 0.2s;
+  }
+
+  .zone-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid;
+  }
+
+  .zone-icon { font-size: 22px; }
+  .zone-title { font-size: 15px; font-weight: 700; }
+  .zone-count {
+    margin-left: auto;
+    font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
+  }
+
+  /* Human zone */
+  .zone-human {
+    background: var(--human-bg);
+    border: 2px solid var(--human-border);
+  }
+  .zone-human .zone-header { border-color: var(--human-border); }
+  .zone-human .zone-title { color: var(--human); }
+  .zone-human .zone-count { background: rgba(22,163,74,0.15); color: var(--human); }
+  .zone-human.drag-over { border-color: var(--human); background: rgba(22,163,74,0.08); }
+
+  /* KI zone */
+  .zone-ki {
+    background: var(--ki-bg);
+    border: 2px solid var(--ki-border);
+  }
+  .zone-ki .zone-header { border-color: var(--ki-border); }
+  .zone-ki .zone-title { color: var(--ki); }
+  .zone-ki .zone-count { background: rgba(37,99,235,0.12); color: var(--ki); }
+  .zone-ki.drag-over { border-color: var(--ki); background: rgba(37,99,235,0.06); }
+
+  /* Both zone */
+  .zone-both {
+    background: var(--both-bg);
+    border: 2px solid var(--both-border);
+  }
+  .zone-both .zone-header { border-color: var(--both-border); }
+  .zone-both .zone-title { color: var(--both); }
+  .zone-both .zone-count { background: rgba(217,119,6,0.12); color: var(--both); }
+  .zone-both.drag-over { border-color: var(--both); background: rgba(217,119,6,0.06); }
+
+  .zone-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 120px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: grab;
+    user-select: none;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent); }
+  .card.dragging { opacity: 0.4; cursor: grabbing; }
+
+  .card .card-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* Card in zone — color hint after check */
+  .card.correct-human { border-color: var(--human); background: var(--human-bg); }
+  .card.correct-ki { border-color: var(--ki); background: var(--ki-bg); }
+  .card.correct-both { border-color: var(--both); background: var(--both-bg); }
+  .card.wrong { border-color: #dc2626; background: #fff5f5; }
+
+  /* Buttons */
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: all 0.2s;
+  }
+
+  .btn-check { background: var(--accent); color: white; }
+  .btn-check:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-reset { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Result */
+  .result {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .result.show { display: block; }
+  .result .score { font-size: 36px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .result .score-label { font-size: 15px; color: var(--text-dim); margin-bottom: 16px; }
+
+  .result-detail {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .result-item {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+  }
+
+  .result-item.good { background: rgba(22,163,74,0.12); color: var(--human); }
+  .result-item.bad { background: rgba(220,38,38,0.1); color: #dc2626; }
+
+  /* Feedback panel */
+  .feedback-panel {
+    display: none;
+    margin-top: 20px;
+    text-align: left;
+  }
+
+  .feedback-panel.show { display: block; }
+
+  .feedback-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .feedback-item.correct { background: rgba(22,163,74,0.08); }
+  .feedback-item.incorrect { background: rgba(220,38,38,0.08); }
+  .feedback-item .fi-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .feedback-item .fi-text { line-height: 1.5; color: var(--text); }
+  .feedback-item .fi-text strong { display: block; margin-bottom: 2px; }
+  .feedback-item .fi-text em { color: var(--text-dim); font-style: normal; }
+
+  /* Transition hint */
+  .transition-box {
+    display: none;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    color: white;
+    margin-top: 24px;
+  }
+
+  .transition-box.show { display: block; animation: fadeUp 0.5s ease; }
+  .transition-box p { font-size: 16px; line-height: 1.7; margin-bottom: 12px; }
+  .transition-box .tb-rule { font-family: 'Playfair Display', serif; font-style: italic; font-size: 18px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="tag">Einstieg · Stunde 1 · Informatik</div>
+    <h1>KI oder Mensch?</h1>
+    <p class="subtitle">Welche Aufgaben kann KI übernehmen — und welche eher nicht?</p>
+  </div>
+
+  <div class="instruction">
+    📦 Ziehe jede Karte in die passende Spalte: <strong>Eher KI</strong>, <strong>Eher Mensch</strong> oder <strong>Beides möglich</strong>
+  </div>
+
+  <div class="pool-label">Aufgaben zum Zuordnen:</div>
+  <div class="card-pool" id="pool" ondragover="onDragOver(event, 'pool')" ondragleave="onDragLeave(event, 'pool')" ondrop="onDrop(event, 'pool')"></div>
+
+  <div class="zones">
+    <div class="zone zone-ki" id="zone-ki" ondragover="onDragOver(event, 'zone-ki')" ondragleave="onDragLeave(event, 'zone-ki')" ondrop="onDrop(event, 'zone-ki')">
+      <div class="zone-header">
+        <span class="zone-icon">🤖</span>
+        <span class="zone-title">Eher KI</span>
+        <span class="zone-count" id="count-ki">0</span>
+      </div>
+      <div class="zone-cards" id="cards-ki"></div>
+    </div>
+
+    <div class="zone zone-human" id="zone-human" ondragover="onDragOver(event, 'zone-human')" ondragleave="onDragLeave(event, 'zone-human')" ondrop="onDrop(event, 'zone-human')">
+      <div class="zone-header">
+        <span class="zone-icon">🧠</span>
+        <span class="zone-title">Eher Mensch</span>
+        <span class="zone-count" id="count-human">0</span>
+      </div>
+      <div class="zone-cards" id="cards-human"></div>
+    </div>
+
+    <div class="zone zone-both" id="zone-both" ondragover="onDragOver(event, 'zone-both')" ondragleave="onDragLeave(event, 'zone-both')" ondrop="onDrop(event, 'zone-both')">
+      <div class="zone-header">
+        <span class="zone-icon">⚖️</span>
+        <span class="zone-title">Beides möglich</span>
+        <span class="zone-count" id="count-both">0</span>
+      </div>
+      <div class="zone-cards" id="cards-both"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-check" onclick="checkAnswers()">✓ Auswertung</button>
+    <button class="btn btn-reset" onclick="resetAll()">↩ Zurücksetzen</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="score" id="score-text">8 / 10</div>
+    <div class="score-label">Karten richtig zugeordnet</div>
+    <div class="result-detail" id="result-detail"></div>
+  </div>
+
+  <div class="feedback-panel" id="feedback-panel"></div>
+
+  <div class="transition-box" id="transition-box">
+    <p>Du hast gerade gesehen: Viele Aufgaben kann KI übernehmen — schneller, effizienter, ohne Pause.<br>
+    Aber was passiert, wenn wir das dauerhaft zulassen?</p>
+    <div class="tb-rule">„Lasst Euch nicht Eurer menschlichen Potenziale berauben." — Regel 7</div>
+  </div>
+
+</div>
+
+<script>
+const cards = [
+  { id: 'c1',  icon: '📝', text: 'Einen Text zusammenfassen',           correct: 'ki',    explanation: 'KI kann Texte sehr schnell und präzise zusammenfassen.' },
+  { id: 'c2',  icon: '🎨', text: 'Eine kreative Idee entwickeln',        correct: 'both',  explanation: 'KI kann Ideen generieren — aber echte Kreativität mit persönlichem Kontext bleibt menschlich.' },
+  { id: 'c3',  icon: '📊', text: 'Daten analysieren und Muster finden',  correct: 'ki',    explanation: 'Datenanalyse in großem Maßstab ist eine Kernstärke von KI.' },
+  { id: 'c4',  icon: '🤝', text: 'Jemanden in einer Krise trösten',      correct: 'human', explanation: 'Echte Empathie und menschliche Verbindung kann KI nicht ersetzen.' },
+  { id: 'c5',  icon: '🗺️', text: 'Eine Karte lesen und navigieren',      correct: 'human', explanation: 'Besonders im Notfall ohne Strom braucht man diese Fähigkeit selbst.' },
+  { id: 'c6',  icon: '⚖️', text: 'Eine ethische Entscheidung treffen',   correct: 'human', explanation: 'Ethische Abwägungen erfordern menschliches Urteilsvermögen und Verantwortung.' },
+  { id: 'c7',  icon: '🔍', text: 'Fakten recherchieren',                  correct: 'both',  explanation: 'Beide können recherchieren — aber kritisches Prüfen der Quellen bleibt Menschenaufgabe.' },
+  { id: 'c8',  icon: '🌐', text: 'Texte in andere Sprachen übersetzen',  correct: 'ki',    explanation: 'KI-Übersetzungen sind mittlerweile sehr gut — besonders für Standardtexte.' },
+  { id: 'c9',  icon: '🛠️', text: 'Im Blackout ein Netzwerk aufbauen',   correct: 'human', explanation: 'Ohne Internet und Strom braucht man dieses Wissen wirklich selbst — kein KI-Zugriff möglich.' },
+  { id: 'c10', icon: '✍️', text: 'Einen persönlichen Brief schreiben',   correct: 'human', explanation: 'Persönliche Geschichten, Gefühle und Beziehungen kann nur der Mensch selbst ausdrücken.' },
+  { id: 'c11', icon: '🔧', text: 'Code debuggen und Fehler finden',      correct: 'both',  explanation: 'KI ist gut darin — aber das Verstehen des Problems bleibt wichtig.' },
+  { id: 'c12', icon: '🧭', text: 'In einer Gruppe eine Entscheidung moderieren', correct: 'human', explanation: 'Gruppenführung, Vertrauen und soziale Dynamik sind menschliche Kernkompetenzen.' },
+];
+
+let draggingId = null;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function createCardEl(card) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.id = card.id;
+  el.draggable = true;
+  el.innerHTML = `<span class="card-icon">${card.icon}</span>${card.text}`;
+  el.addEventListener('dragstart', e => {
+    draggingId = card.id;
+    setTimeout(() => el.classList.add('dragging'), 0);
+  });
+  el.addEventListener('dragend', () => {
+    el.classList.remove('dragging');
+    draggingId = null;
+  });
+  // Touch support
+  el.addEventListener('touchstart', touchStart, { passive: true });
+  el.addEventListener('touchmove', touchMove, { passive: false });
+  el.addEventListener('touchend', touchEnd);
+  return el;
+}
+
+function onDragOver(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('drag-over');
+}
+
+function onDragLeave(e, zoneId) {
+  document.getElementById(zoneId).classList.remove('drag-over');
+}
+
+function onDrop(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.remove('drag-over');
+  if (!draggingId) return;
+  moveCard(draggingId, zoneId);
+}
+
+function moveCard(cardId, targetId) {
+  const el = document.getElementById(cardId);
+  if (!el) return;
+
+  // Remove from current parent
+  el.parentNode.removeChild(el);
+
+  // Add to target
+  if (targetId === 'pool') {
+    document.getElementById('pool').appendChild(el);
+  } else {
+    const zoneKey = targetId.replace('zone-', '');
+    document.getElementById('cards-' + zoneKey).appendChild(el);
+  }
+  updateCounts();
+}
+
+function updateCounts() {
+  ['ki', 'human', 'both'].forEach(z => {
+    const count = document.getElementById('cards-' + z).children.length;
+    document.getElementById('count-' + z).textContent = count;
+  });
+}
+
+function checkAnswers() {
+  let correct = 0;
+  const feedbackItems = [];
+
+  cards.forEach(card => {
+    const el = document.getElementById(card.id);
+    if (!el) return;
+
+    // Find which zone it's in
+    let currentZone = 'pool';
+    if (document.getElementById('cards-ki').contains(el)) currentZone = 'ki';
+    else if (document.getElementById('cards-human').contains(el)) currentZone = 'human';
+    else if (document.getElementById('cards-both').contains(el)) currentZone = 'both';
+
+    if (currentZone === 'pool') return; // not placed
+
+    const isCorrect = currentZone === card.correct;
+    if (isCorrect) {
+      correct++;
+      el.classList.add('correct-' + card.correct);
+    } else {
+      el.classList.add('wrong');
+    }
+
+    const zoneLabels = { ki: '🤖 Eher KI', human: '🧠 Eher Mensch', both: '⚖️ Beides möglich' };
+    feedbackItems.push({ card, isCorrect, currentZone, zoneLabels });
+  });
+
+  const placed = feedbackItems.length;
+  const total = cards.length;
+
+  // Show result
+  const result = document.getElementById('result');
+  result.classList.add('show');
+  document.getElementById('score-text').textContent = `${correct} / ${total}`;
+
+  const detail = document.getElementById('result-detail');
+  detail.innerHTML = `
+    <div class="result-item good">✅ ${correct} richtig</div>
+    <div class="result-item ${placed - correct > 0 ? 'bad' : 'good'}">❌ ${placed - correct} falsch</div>
+    ${placed < total ? `<div class="result-item bad">⏳ ${total - placed} nicht zugeordnet</div>` : ''}
+  `;
+
+  // Feedback panel
+  const panel = document.getElementById('feedback-panel');
+  panel.innerHTML = '<div style="font-size:13px; font-weight:700; color:var(--text-dim); margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Erklärungen</div>';
+  feedbackItems.forEach(({ card, isCorrect, currentZone, zoneLabels }) => {
+    const div = document.createElement('div');
+    div.className = 'feedback-item ' + (isCorrect ? 'correct' : 'incorrect');
+    div.innerHTML = `
+      <div class="fi-icon">${isCorrect ? '✅' : '❌'}</div>
+      <div class="fi-text">
+        <strong>${card.icon} ${card.text}</strong>
+        ${!isCorrect ? `<em>Du: ${zoneLabels[currentZone]} → Richtig: ${zoneLabels[card.correct]}</em><br>` : ''}
+        ${card.explanation}
+      </div>
+    `;
+    panel.appendChild(div);
+  });
+  panel.classList.add('show');
+
+  // Show transition if score >= 8
+  if (correct >= 8) {
+    document.getElementById('transition-box').classList.add('show');
+  }
+
+  // Scroll to result
+  result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetAll() {
+  const pool = document.getElementById('pool');
+  cards.forEach(card => {
+    const el = document.getElementById(card.id);
+    if (el) {
+      el.className = 'card';
+      pool.appendChild(el);
+    }
+  });
+  updateCounts();
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('feedback-panel').classList.remove('show');
+  document.getElementById('transition-box').classList.remove('show');
+}
+
+// Touch drag support
+let touchCard = null, touchClone = null, touchOffsetX = 0, touchOffsetY = 0;
+
+function touchStart(e) {
+  touchCard = e.currentTarget;
+  const rect = touchCard.getBoundingClientRect();
+  touchOffsetX = e.touches[0].clientX - rect.left;
+  touchOffsetY = e.touches[0].clientY - rect.top;
+
+  touchClone = touchCard.cloneNode(true);
+  touchClone.style.cssText = `position:fixed; pointer-events:none; opacity:0.85; z-index:9999; width:${rect.width}px; transform:rotate(2deg); box-shadow: 0 8px 24px rgba(0,0,0,0.2);`;
+  document.body.appendChild(touchClone);
+  touchCard.style.opacity = '0.3';
+}
+
+function touchMove(e) {
+  e.preventDefault();
+  if (!touchClone) return;
+  const x = e.touches[0].clientX - touchOffsetX;
+  const y = e.touches[0].clientY - touchOffsetY;
+  touchClone.style.left = x + 'px';
+  touchClone.style.top = y + 'px';
+}
+
+function touchEnd(e) {
+  if (!touchClone || !touchCard) return;
+  document.body.removeChild(touchClone);
+  touchCard.style.opacity = '1';
+
+  const x = e.changedTouches[0].clientX;
+  const y = e.changedTouches[0].clientY;
+
+  const zones = ['pool', 'zone-ki', 'zone-human', 'zone-both'];
+  for (const zId of zones) {
+    const el = document.getElementById(zId);
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      moveCard(touchCard.id, zId);
+      break;
+    }
+  }
+
+  touchClone = null;
+  touchCard = null;
+}
+
+// Init
+const shuffled = shuffle([...cards]);
+const pool = document.getElementById('pool');
+shuffled.forEach(card => pool.appendChild(createCardEl(card)));
+</script>
+</body>
+</html>
